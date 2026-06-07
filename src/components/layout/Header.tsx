@@ -57,7 +57,7 @@ export default function Header() {
 
   const drawerTransition = shouldReduce
     ? { duration: 0 }
-    : { duration: 0.32, ease: [0.16, 1, 0.3, 1] };
+    : { duration: 0.32, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] };
 
   return (
     <>
