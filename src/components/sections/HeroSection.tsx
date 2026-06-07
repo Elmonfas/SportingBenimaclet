@@ -14,7 +14,7 @@ export default function HeroSection() {
         className="absolute inset-0 w-full h-full object-cover"
         aria-hidden="true"
       >
-        <source src="/videos/campana-abonos-2025.mp4" type="video/mp4" />
+        <source src="https://res.cloudinary.com/dtvcdfzbx/video/upload/v1780803855/campana-abonos-2025_eoy94j.mp4" type="video/mp4" />
       </video>
 
       {/* Capa 1: viñeta oscura en bordes */}
