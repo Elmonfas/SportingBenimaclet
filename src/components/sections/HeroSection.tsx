@@ -61,7 +61,7 @@ export default function HeroSection() {
         >
           <iframe
             ref={iframeRef}
-            src="/sporting_benimaclet_3d.html?v=9"
+            src="/sporting_benimaclet_3d.html?v=15"
             className="border-0 block"
             style={{
               width: "clamp(220px, 38vw, 380px)",
