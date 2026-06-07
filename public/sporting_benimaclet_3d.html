@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sporting Benimaclet 3D</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: transparent; overflow: hidden; }
+    canvas { width: 100vw; height: 100vh; display: block; cursor: grab; }
+    canvas:active { cursor: grabbing; }
+    #hint { display: none; }
+    #msg {
+      position: fixed; inset: 0; display: flex;
+      align-items: center; justify-content: center;
+      color: rgba(100,100,100,0.6); font-family: sans-serif;
+      font-size: 13px; letter-spacing: 2px; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c3d"></canvas>
+  <div id="msg">CARGANDO...</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+  (function(){
+    const canvas = document.getElementById('c3d');
+    const msg    = document.getElementById('msg');
+
+    // alpha: true + setClearColor transparent = fondo transparente
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0); // completamente transparente
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+
+    const scene = new THREE.Scene();
+    // SIN scene.background ni fog oscuro para que sea transparente
+
+    const camera = new THREE.PerspectiveCamera(42, 2, 0.1, 200);
+    camera.position.set(0, 0, 18);
+
+    function resize() {
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Luces
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+    const key = new THREE.DirectionalLight(0xffffff, 1.4);
+    key.position.set(10, 14, 12); scene.add(key);
+    const fill = new THREE.DirectionalLight(0x88ffaa, 0.6);
+    fill.position.set(-10, -4, 8); scene.add(fill);
+    const rim = new THREE.DirectionalLight(0x00ff44, 1.0);
+    rim.position.set(0, -10, -12); scene.add(rim);
+    const pt = new THREE.PointLight(0x00dd44, 2.0, 40);
+    pt.position.set(0, 2, 10); scene.add(pt);
+
+    // Materiales
+    const gMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0d7a30, metalness: 0.4, roughness: 0.15,
+      clearcoat: 0.7, clearcoatRoughness: 0.1
+    });
+    const wMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff, metalness: 0.05, roughness: 0.25, clearcoat: 0.9
+    });
+    const auMat = new THREE.MeshPhysicalMaterial({
+      color: 0xddaa22, metalness: 0.95, roughness: 0.08
+    });
+
+    const group = new THREE.Group();
+    scene.add(group);
+
+    // Fuente y texto 3D
+    const loader = new THREE.FontLoader();
+    loader.load(
+      'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_bold.typeface.json',
+      function(font) {
+        msg.style.display = 'none';
+
+        const bev = {
+          bevelEnabled: true, bevelThickness: 0.10,
+          bevelSize: 0.08, bevelSegments: 4, curveSegments: 10
+        };
+
+        function textMesh(str, size, depth, mat) {
+          const geo = new THREE.TextGeometry(str, { font, size, height: depth, ...bev });
+          geo.computeBoundingBox();
+          const w = geo.boundingBox.max.x - geo.boundingBox.min.x;
+          const h = geo.boundingBox.max.y - geo.boundingBox.min.y;
+          return { mesh: new THREE.Mesh(geo, mat), w, h };
+        }
+
+        // SPORTING verde
+        const { mesh: sM, w: sw } = textMesh('SPORTING', 2.2, 1.4, gMat);
+        sM.position.set(-sw/2, 1.2, 0.1);
+        group.add(sM);
+
+        // SPORTING contorno blanco
+        const { mesh: sW, w: swW } = textMesh('SPORTING', 2.28, 0.25, wMat);
+        sW.position.set(-swW/2, 1.16, -0.22);
+        group.add(sW);
+
+        // BENIMACLET verde
+        const bSize = 1.32;
+        const { mesh: bM, w: bw } = textMesh('BENIMACLET', bSize, 0.85, gMat);
+        const bStartX = -bw / 2;
+        bM.position.set(bStartX, -2.5, 0.1);
+        group.add(bM);
+
+        // BENIMACLET contorno blanco
+        const { mesh: bW, w: bwW } = textMesh('BENIMACLET', 1.38, 0.22, wMat);
+        bW.position.set(-bwW/2, -2.55, -0.2);
+        group.add(bW);
+
+        // Localizar la T (última letra de BENIMACLET)
+        const { w: preT } = textMesh('BENIMACLE', bSize, 0.85, gMat);
+        const { w: tW }   = textMesh('T', bSize, 0.85, gMat);
+        const tCenterX = bStartX + preT + tW / 2;
+
+        // 1991 dorado encima de la T
+        const { mesh: yM, w: yw } = textMesh('1991', 0.55, 0.45, auMat);
+        yM.position.set(tCenterX - yw/2, -2.5 + bSize * 1.05 + 0.05, 0.2);
+        group.add(yM);
+
+        // SWOOSH
+        const sx0 = sw/2 + 0.2, sy0 = 1.0;
+        const pts = [
+          new THREE.Vector3(sx0,       sy0+0.10, 0.40),
+          new THREE.Vector3(sx0-1.5,   sy0-0.15, 0.40),
+          new THREE.Vector3(sx0-4.0,   sy0-0.35, 0.35),
+          new THREE.Vector3(sx0-7.0,   sy0-0.15, 0.30),
+          new THREE.Vector3(sx0-10.0,  sy0+0.05, 0.28),
+          new THREE.Vector3(sx0-12.0,  sy0+0.00, 0.28),
+          new THREE.Vector3(sx0-13.2,  sy0-0.45, 0.30),
+          new THREE.Vector3(sx0-12.6,  sy0-0.85, 0.35),
+          new THREE.Vector3(sx0-12.0,  sy0-0.55, 0.30),
+        ];
+        const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.5);
+        group.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 80, 0.20, 10, false), gMat));
+        const swOut = new THREE.Mesh(new THREE.TubeGeometry(curve, 80, 0.28, 10, false), wMat);
+        swOut.position.z = -0.2;
+        group.add(swOut);
+      },
+      undefined,
+      function() { msg.textContent = 'Error al cargar la fuente'; }
+    );
+
+    // Drag con setPointerCapture — funciona aunque el cursor salga del canvas
+    let drag = false, px = 0, py = 0;
+    canvas.addEventListener('pointerdown', e => {
+      canvas.setPointerCapture(e.pointerId);
+      drag = true; px = e.clientX; py = e.clientY;
+      canvas.style.cursor = 'grabbing';
+    });
+    canvas.addEventListener('pointerup', () => {
+      drag = false; canvas.style.cursor = 'grab';
+    });
+    canvas.addEventListener('pointercancel', () => {
+      drag = false; canvas.style.cursor = 'grab';
+    });
+    canvas.addEventListener('pointermove', e => {
+      if (!drag) return;
+      group.rotation.y += (e.clientX - px) * 0.007;
+      group.rotation.x += (e.clientY - py) * 0.007;
+      px = e.clientX; py = e.clientY;
+    });
+
+    // Loop — levitación + sway muy suave, sin rotación continua
+    let t = 0;
+    (function loop() {
+      requestAnimationFrame(loop);
+      t += 0.012;
+
+      // Levitación: sube y baja suavemente (periodo ~7.5s)
+      group.position.y = Math.sin(t * 0.83) * 1.1;
+
+      // Sway horizontal muy sutil (periodo ~14s) — como si flotara en el aire
+      group.rotation.y = Math.sin(t * 0.45) * 0.12;
+
+      // Inclinación mínima en X (periodo ~10s) — da sensación de profundidad
+      group.rotation.x = Math.sin(t * 0.6) * 0.06;
+
+      // Luz en movimiento para que los reflejos cambien mientras levita
+      pt.position.x = Math.sin(t * 0.5) * 8;
+      pt.position.y = Math.cos(t * 0.35) * 4 + group.position.y;
+
+      renderer.render(scene, camera);
+    })();
+  })();
+  </script>
+</body>
+</html>
