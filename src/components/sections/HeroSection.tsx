@@ -1,14 +1,33 @@
 "use client";
 
 import Link from "next/link";
+import { useRef, useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 export default function HeroSection() {
   const shouldReduce = useReducedMotion();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Reenvía el movimiento del ratón al iframe para el tilt 3D
+  useEffect(() => {
+    if (shouldReduce) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          type: "mousemove",
+          x: e.clientX / window.innerWidth - 0.5,
+          y: e.clientY / window.innerHeight - 0.5,
+        },
+        "*"
+      );
+    };
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [shouldReduce]);
 
   return (
     <section className="relative min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden">
-      {/* Video */}
+      {/* Video de fondo */}
       <video
         autoPlay muted loop playsInline
         className="absolute inset-0 w-full h-full object-cover"
@@ -17,46 +36,40 @@ export default function HeroSection() {
         <source src="https://res.cloudinary.com/dtvcdfzbx/video/upload/v1780803855/campana-abonos-2025_eoy94j.mp4" type="video/mp4" />
       </video>
 
-      {/* Capa 1: viñeta oscura en bordes */}
+      {/* Viñeta oscura en bordes */}
       <div
         className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.68) 100%)",
-        }}
+        style={{ background: "radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.65) 100%)" }}
+        aria-hidden="true"
+      />
+      {/* Gradiente hacia abajo */}
+      <div
+        className="absolute inset-0"
+        style={{ background: "linear-gradient(to bottom, transparent 25%, rgba(0,18,8,0.70) 60%, rgba(0,18,8,0.96) 100%)" }}
         aria-hidden="true"
       />
 
-      {/* Capa 2: gradiente hacia abajo */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(to bottom, transparent 30%, rgba(0,18,8,0.75) 65%, rgba(0,18,8,0.95) 100%)",
-        }}
-        aria-hidden="true"
-      />
+      {/* Contenido */}
+      <div className="relative z-10 w-full flex flex-col items-center text-center px-6 py-16 gap-5">
 
-      {/* Contenido central — logo + texto como una sola unidad */}
-      <div className="relative z-10 w-full flex flex-col items-center text-center px-6 py-16 gap-4">
-
-        {/* Logo 3D */}
+        {/* Escudo 3D */}
         <motion.div
-          className="w-full"
           aria-hidden="true"
-          initial={shouldReduce ? false : { opacity: 0, scale: 0.88 }}
+          initial={shouldReduce ? false : { opacity: 0, scale: 0.85 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={shouldReduce ? { duration: 0 } : { duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+          transition={shouldReduce ? { duration: 0 } : { duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
         >
           <iframe
-            src="/sporting_benimaclet_3d.html?v=6"
-            className="w-full border-0 block"
+            ref={iframeRef}
+            src="/sporting_benimaclet_3d.html?v=9"
+            className="border-0 block"
             style={{
-              height: "clamp(260px, 50vw, 560px)",
+              width: "clamp(220px, 38vw, 380px)",
+              height: "clamp(220px, 38vw, 380px)",
               background: "transparent",
             }}
             allowTransparency={true}
-            title="Logotip 3D Sporting Benimaclet"
+            title="Escudo 3D Sporting Benimaclet"
             aria-hidden="true"
             tabIndex={-1}
             scrolling="no"
@@ -65,7 +78,7 @@ export default function HeroSection() {
 
         {/* Línea dorada */}
         <motion.div
-          className="w-14 h-px bg-[#F0B429] mt-1"
+          className="w-12 h-px bg-[#F0B429]"
           initial={shouldReduce ? false : { scaleX: 0, opacity: 0 }}
           animate={{ scaleX: 1, opacity: 1 }}
           transition={shouldReduce ? { duration: 0 } : { duration: 0.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
@@ -84,20 +97,20 @@ export default function HeroSection() {
 
         {/* Subtexto */}
         <motion.p
-          className="font-[family-name:var(--font-body)] text-white/70 text-xs tracking-[0.18em] uppercase drop-shadow-sm"
+          className="font-[family-name:var(--font-body)] text-white/60 text-xs tracking-[0.18em] uppercase"
           initial={shouldReduce ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={shouldReduce ? { duration: 0 } : { duration: 0.6, delay: 0.6 }}
+          transition={shouldReduce ? { duration: 0 } : { duration: 0.6, delay: 0.65 }}
         >
           Benimaclet · València · des de 1991
         </motion.p>
 
         {/* CTAs */}
         <motion.div
-          className="flex flex-col sm:flex-row items-center gap-3 mt-2"
+          className="flex flex-col sm:flex-row items-center gap-3 mt-1"
           initial={shouldReduce ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={shouldReduce ? { duration: 0 } : { duration: 0.6, delay: 0.72, ease: [0.16, 1, 0.3, 1] }}
+          transition={shouldReduce ? { duration: 0 } : { duration: 0.6, delay: 0.75, ease: [0.16, 1, 0.3, 1] }}
         >
           <Link
             href="/socios"
